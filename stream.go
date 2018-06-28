@@ -21,7 +21,7 @@ func main() {
     if (len(os.Args)==2) && (os.Args[1]=="help") {
         fmt.Println(strings.Join([]string{
             "",
-            "stream is a tool for network traversal starting from source nodes and along the up or down stream (the down stream is not yet implemented).",
+            "stream is a tool for network traversal starting from source nodes along the up or down stream (the down stream is not yet implemented).",
             "",
             "Typical usage consists in extracting, from the network, the up/down-stream paths of a couple of nodes.",
             "",
@@ -99,8 +99,8 @@ func main() {
             "ERROR: wrong number of arguments",
             "",
             "To print help:    stream help",
-            "To print license: stream license",
             "To print usage:   stream usage",
+            "To print license: stream license",
             "",
             "For more information see https://github.com/arnaudporet/stream",
             "",
@@ -233,7 +233,7 @@ func ReadNetwork(networkFile string) (map[string][]string,map[string]map[string]
     preds=make(map[string][]string)
     edges=make(map[string]map[string]string)
     if err!=nil {
-        fmt.Println("ERROR: "+networkFile+" "+err.Error())
+        fmt.Println("ERROR: "+err.Error())
     } else {
         for _,line=range lines {
             for _,node=range []string{line[0],line[2]} {
@@ -243,7 +243,7 @@ func ReadNetwork(networkFile string) (map[string][]string,map[string]map[string]
         }
         for _,line=range lines {
             if IsInPath(preds[line[2]],line[0]) {
-                fmt.Println("ERROR: "+networkFile+" contains multi-edges")
+                fmt.Println("ERROR: contains multi-edges")
                 preds=make(map[string][]string)
                 edges=make(map[string]map[string]string)
                 break
@@ -266,7 +266,7 @@ func ReadNodes(nodeFile string,preds map[string][]string) []string {
     fmt.Println("reading "+nodeFile)
     file,_=os.Open(nodeFile)
     reader=csv.NewReader(file)
-    reader.Comma=','
+    reader.Comma='\t'
     reader.Comment=0
     reader.FieldsPerRecord=1
     reader.LazyQuotes=false
@@ -275,11 +275,11 @@ func ReadNodes(nodeFile string,preds map[string][]string) []string {
     lines,err=reader.ReadAll()
     file.Close()
     if err!=nil {
-        fmt.Println("ERROR: "+nodeFile+" "+err.Error())
+        fmt.Println("ERROR: "+err.Error())
     } else {
         for _,line=range lines {
             if !IsInPreds(preds,line[0]) {
-                fmt.Println("WARNING: "+line[0]+" in "+nodeFile+" but not in network")
+                fmt.Println("WARNING: "+line[0]+" not in network")
             } else if !IsInPath(nodes,line[0]) {
                 nodes=append(nodes,line[0])
             }

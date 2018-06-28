@@ -6,7 +6,7 @@ This work is licensed under the [BSD 2-Clause License](https://raw.githubusercon
 
 ## stream
 
-[stream](https://github.com/arnaudporet/stream) is a tool implemented in [Go](https://golang.org) for network traversal starting from source nodes and along the up or down stream (the down stream is not yet implemented).
+[stream](https://github.com/arnaudporet/stream) is a tool implemented in [Go](https://golang.org) for network traversal starting from source nodes along the up or down stream (the down stream is not yet implemented).
 
 To do so, in the network, stream performs random walks starting from the nodes given as sources.
 
@@ -53,7 +53,7 @@ The returned file is a sif file encoding a subnetwork (of the provided network) 
 * the network must be provided as a sif file (see above)
 * in the file containing the source nodes (see above): one node per line
 * since stream uses random walks:
-    * the results can be different between identical runs
+    * the results can be subject to variability
     * returning all the possible up/down-stream paths is not guaranteed
 * increasing `maxWalk`:
     * increases the robustness of the results
