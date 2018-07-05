@@ -59,10 +59,28 @@ The returned file is a sif file encoding a subnetwork (of the provided network) 
     * increases the robustness of the results
     * but also increases the calculation time
 
+## Examples
+
+All the used example networks are adapted from pathways coming from [KEGG Pathway](https://www.genome.jp/kegg/pathway.html).
+
+* example 1: ErbB signaling pathway
+    * `stream ErbB_signaling_pathway.sif sources.txt 1000 1000000`
+    * networkFile: the ErbB signaling pathway (138 edges)
+    * sourceFile: contains the nodes JUN and MYC
+    * maxStep: 1000
+    * maxWalk: 1000000
+    * result: sources.sif (133 edges), also in svg for visualization
+
+The ErbB signaling pathway is a growth-promoting signaling pathway typically activated by the epidermal growth factor (EGF).
+
+JUN and MYC are two transcription factors influencing the expression of target genes following EGF stimulation.
+
+The resulting file `sources.sif` converted in svg shows the upstream paths (i.e. the regulating paths) of JUN (red) and MYC (green) in the ErbB signaling pathway. It highlights that JUN and MYC share common elements in there regulating paths (red and green) and also specific elements (red or green). Note that other regulating paths outside of the ErbB signaling pathway exists.
+
 ## Forthcoming
 
 * implementing the down-stream traversal
-* adding examples
+* adding more complex examples
 
 ## Go
 
