@@ -58,20 +58,20 @@ All the networks used in these examples are adapted from pathways coming from [K
     * networkFile: the ErbB signaling pathway (239 edges)
     * rootFile: contains the nodes JUN and MYC
     * direction: up
-    * result: roots.sif (133 edges), also in svg for visualization
+    * result: roots-upstream.sif (133 edges), also in svg for visualization
 
 The ErbB signaling pathway is a growth-promoting signaling pathway typically activated by the epidermal growth factor (EGF).
 
 JUN and MYC are two transcription factors influencing the expression of target genes following EGF stimulation.
 
-The resulting file `roots.sif` converted to svg shows the upstream paths (i.e. the regulating paths) of JUN (red) and MYC (green) in the ErbB signaling pathway. It highlights that JUN and MYC share common elements in there regulating paths (red and green) and also specific elements (red or green). Note that other regulating paths outside of the ErbB signaling pathway exist.
+The resulting file `roots-upstream.sif` converted to svg shows the upstream paths (i.e. the regulating paths) of JUN (red) and MYC (green) in the ErbB signaling pathway. It highlights that JUN and MYC share common elements in there regulating paths (red and green) and also specific elements (red or green). Note that other regulating paths outside of the ErbB signaling pathway exist.
 
 * Toll-like receptor signaling pathway
     * `stream Toll-like_receptor_signaling_pathway.sif roots.txt down`
     * networkFile: the Toll-like receptor signaling pathway (219 edges)
     * rootFile: contains the nodes TLR3 and TLR4
     * direction: down
-    * result: roots.sif (152 edges), also in svg for visualization
+    * result: roots-downstream.sif (152 edges), also in svg for visualization
 
 The Toll-like receptors (TLRs) are cell surface receptors which can be activated by various pathogen associated molecular patterns (PMAPs).
 
@@ -79,7 +79,7 @@ PMAPs are molecules coming from microorganisms and the TLRs can detect them in o
 
 TLR3 can detect the presence of double-stranded RNA (dsRNA) coming from RNA viruses whereas TLR4 can detect lipopolysaccharide (LPS) coming from Gram-negative bacteria.
 
-The resulting file `roots.sif` converted to svg shows the downstream paths (i.e. the effector paths) of TLR3 (red) and TLR4 (green). It highlights that TLR3 and TLR4 share common effectors (red and green) and also specific ones (red or green).
+The resulting file `roots-downstream.sif` converted to svg shows the downstream paths (i.e. the effector paths) of TLR3 (red) and TLR4 (green). It highlights that TLR3 and TLR4 share common effectors (red and green) and also specific ones (red or green).
 
 ## Forthcoming
 

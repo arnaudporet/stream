@@ -9,37 +9,49 @@ import (
 )
 func main() {
     var (
-        roots []string
-        ward [][]string
-        nodeSP map[string][]string
+        ok bool
+        wardFile string
+        nodes,roots []string
+        edges,ward [][]string
         edgeNames map[string]map[string]string
-        edgeSP map[string]map[string][][]string
     )
     if len(os.Args)==4 {
+        ok=true
         if !strings.HasSuffix(os.Args[1],".sif") {
-            fmt.Println("ERROR: "+os.Args[1]+" must have the .sif file extension")
-        } else if !strings.HasSuffix(os.Args[2],".txt") {
-            fmt.Println("ERROR: "+os.Args[2]+" must have the .txt file extension")
-        } else if (os.Args[3]!="up") && (os.Args[3]!="down") {
+            fmt.Println("ERROR: "+os.Args[1]+" must have the \".sif\" file extension")
+            ok=false
+        }
+        if !strings.HasSuffix(os.Args[2],".txt") {
+            fmt.Println("ERROR: "+os.Args[2]+" must have the \".txt\" file extension")
+            ok=false
+        }
+        if (os.Args[3]!="up") && (os.Args[3]!="down") {
             fmt.Println("ERROR: direction must be \"up\" or \"down\"")
-        } else {
-            nodeSP,edgeSP,edgeNames=ReadNetwork(os.Args[1],os.Args[3])
-            if len(edgeNames)==0 {
+            ok=false
+        }
+        if ok {
+            fmt.Println("INFO: reading "+os.Args[1])
+            nodes,edges,edgeNames=ReadNetwork(os.Args[1])
+            if len(edges)==0 {
                 fmt.Println("WARNING: "+os.Args[1]+" is empty after reading")
             } else {
-                roots=ReadNodes(os.Args[2],nodeSP)
+                fmt.Println("INFO: reading "+os.Args[2])
+                roots=ReadNodes(os.Args[2],nodes)
                 if len(roots)==0 {
                     fmt.Println("WARNING: "+os.Args[2]+" is empty after reading")
                 } else {
+                    fmt.Println("INFO: "+os.Args[3]+"streaming "+os.Args[2])
                     if os.Args[3]=="down" {
-                        ward=ForwardEdges(roots,nodeSP,edgeSP)
+                        ward=ForwardEdges(roots,edges)
                     } else if os.Args[3]=="up" {
-                        ward=BackwardEdges(roots,nodeSP,edgeSP)
+                        ward=BackwardEdges(roots,edges)
                     }
                     if len(ward)==0 {
                         fmt.Println("WARNING: no "+os.Args[3]+"stream paths found")
                     } else {
-                        WriteNetwork(strings.Replace(os.Args[2],".txt",".sif",-1),ward,edgeNames)
+                        wardFile=strings.Replace(os.Args[2],".txt","-"+os.Args[3]+"stream.sif",-1)
+                        fmt.Println("INFO: writing "+wardFile)
+                        WriteNetwork(wardFile,ward,edgeNames)
                     }
                 }
             }
@@ -71,7 +83,7 @@ func main() {
     } else if (len(os.Args)==2) && (os.Args[1]=="license") {
         fmt.Println(strings.Join([]string{
             "",
-            "Copyright 2017-2018 Arnaud Poret",
+            "Copyright 2018 Arnaud Poret",
             "",
             "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:",
             "",
@@ -101,35 +113,34 @@ func main() {
         },"\n"))
     }
 }
-func BackwardEdges(nroots []string,nodePred map[string][]string,edgePred map[string]map[string][][]string) [][]string {
+func BackwardEdges(roots []string,edges [][]string) [][]string {
     var (
-        nroot,npred string
-        eroot,check,epred []string
-        backward,newCheck,toCheck [][]string
+        root,npred string
+        edge,epred []string
+        toCheck,newCheck,backward [][]string
+        nodePred map[string][]string
+        edgePred map[string]map[string][][]string
     )
-    for _,nroot=range nroots {
-        fmt.Println("backwarding "+nroot)
-        for _,npred=range nodePred[nroot] {
-            eroot=[]string{npred,nroot}
-            if !IsInList2(backward,eroot) {
-                backward=append(backward,CopyList(eroot))
-                newCheck=[][]string{CopyList(eroot)}
-                for {
-                    toCheck=CopyList2(newCheck)
-                    newCheck=[][]string{}
-                    for _,check=range toCheck {
-                        for _,epred=range edgePred[check[0]][check[1]] {
-                            if !IsInList2(backward,epred) {
-                                backward=append(backward,CopyList(epred))
-                                newCheck=append(newCheck,CopyList(epred))
-                            }
-                        }
-                    }
-                    if len(newCheck)==0 {
-                        break
-                    }
+    nodePred,edgePred=GetPredecessors(edges)
+    for _,root=range roots {
+        for _,npred=range nodePred[root] {
+            backward=append(backward,[]string{npred,root})
+            newCheck=append(newCheck,[]string{npred,root})
+        }
+    }
+    for {
+        toCheck=CopyList2(newCheck)
+        newCheck=[][]string{}
+        for _,edge=range toCheck {
+            for _,epred=range edgePred[edge[0]][edge[1]] {
+                if !IsInList2(backward,epred) {
+                    backward=append(backward,CopyList(epred))
+                    newCheck=append(newCheck,CopyList(epred))
                 }
             }
+        }
+        if len(newCheck)==0 {
+            break
         }
     }
     return backward
@@ -152,38 +163,93 @@ func CopyList2(list2 [][]string) [][]string {
     }
     return y
 }
-func ForwardEdges(nroots []string,nodeSucc map[string][]string,edgeSucc map[string]map[string][][]string) [][]string {
+func ForwardEdges(roots []string,edges [][]string) [][]string {
     var (
-        nroot,nsucc string
-        eroot,check,esucc []string
-        forward,newCheck,toCheck [][]string
+        root,nsucc string
+        edge,esucc []string
+        toCheck,newCheck,forward [][]string
+        nodeSucc map[string][]string
+        edgeSucc map[string]map[string][][]string
     )
-    for _,nroot=range nroots {
-        fmt.Println("forwarding "+nroot)
-        for _,nsucc=range nodeSucc[nroot] {
-            eroot=[]string{nroot,nsucc}
-            if !IsInList2(forward,eroot) {
-                forward=append(forward,CopyList(eroot))
-                newCheck=[][]string{CopyList(eroot)}
-                for {
-                    toCheck=CopyList2(newCheck)
-                    newCheck=[][]string{}
-                    for _,check=range toCheck {
-                        for _,esucc=range edgeSucc[check[0]][check[1]] {
-                            if !IsInList2(forward,esucc) {
-                                forward=append(forward,CopyList(esucc))
-                                newCheck=append(newCheck,CopyList(esucc))
-                            }
-                        }
-                    }
-                    if len(newCheck)==0 {
-                        break
-                    }
+    nodeSucc,edgeSucc=GetSuccessors(edges)
+    for _,root=range roots {
+        for _,nsucc=range nodeSucc[root] {
+            forward=append(forward,[]string{root,nsucc})
+            newCheck=append(newCheck,[]string{root,nsucc})
+        }
+    }
+    for {
+        toCheck=CopyList2(newCheck)
+        newCheck=[][]string{}
+        for _,edge=range toCheck {
+            for _,esucc=range edgeSucc[edge[0]][edge[1]] {
+                if !IsInList2(forward,esucc) {
+                    forward=append(forward,CopyList(esucc))
+                    newCheck=append(newCheck,CopyList(esucc))
                 }
             }
         }
+        if len(newCheck)==0 {
+            break
+        }
     }
     return forward
+}
+func GetPredecessors(edges [][]string) (map[string][]string,map[string]map[string][][]string) {
+    var (
+        node,node2,node3 string
+        edge []string
+        nodePred map[string][]string
+        edgePred map[string]map[string][][]string
+    )
+    nodePred=make(map[string][]string)
+    edgePred=make(map[string]map[string][][]string)
+    for _,edge=range edges {
+        for _,node=range edge {
+            nodePred[node]=[]string{}
+        }
+        edgePred[edge[0]]=make(map[string][][]string)
+    }
+    for _,edge=range edges {
+        nodePred[edge[1]]=append(nodePred[edge[1]],edge[0])
+        edgePred[edge[0]][edge[1]]=[][]string{}
+    }
+    for node=range nodePred {
+        for _,node2=range nodePred[node] {
+            for _,node3=range nodePred[node2] {
+                edgePred[node2][node]=append(edgePred[node2][node],[]string{node3,node2})
+            }
+        }
+    }
+    return nodePred,edgePred
+}
+func GetSuccessors(edges [][]string) (map[string][]string,map[string]map[string][][]string) {
+    var (
+        node,node2,node3 string
+        edge []string
+        nodeSucc map[string][]string
+        edgeSucc map[string]map[string][][]string
+    )
+    nodeSucc=make(map[string][]string)
+    edgeSucc=make(map[string]map[string][][]string)
+    for _,edge=range edges {
+        for _,node=range edge {
+            nodeSucc[node]=[]string{}
+        }
+        edgeSucc[edge[0]]=make(map[string][][]string)
+    }
+    for _,edge=range edges {
+        nodeSucc[edge[0]]=append(nodeSucc[edge[0]],edge[1])
+        edgeSucc[edge[0]][edge[1]]=[][]string{}
+    }
+    for node=range nodeSucc {
+        for _,node2=range nodeSucc[node] {
+            for _,node3=range nodeSucc[node2] {
+                edgeSucc[node][node2]=append(edgeSucc[node][node2],[]string{node2,node3})
+            }
+        }
+    }
+    return nodeSucc,edgeSucc
 }
 func IsInList(list []string,thatElement string) bool {
     var element string
@@ -216,32 +282,21 @@ func IsInList2(list2 [][]string,thatList []string) bool {
     }
     return false
 }
-func IsInNetwork(nodeSP map[string][]string,thatNode string) bool {
-    var node string
-    for node=range nodeSP {
-        if node==thatNode {
-            return true
-        }
-    }
-    return false
-}
-func ReadNetwork(networkFile,direction string) (map[string][]string,map[string]map[string][][]string,map[string]map[string]string) {
+func ReadNetwork(networkFile string) ([]string,[][]string,map[string]map[string]string) {
     var (
         err error
-        node1,node2,node3 string
-        line []string
-        lines [][]string
-        nodeSP map[string][]string
+        node string
+        nodes,edge,line []string
+        edges,lines [][]string
         edgeNames map[string]map[string]string
-        edgeSP map[string]map[string][][]string
         file *os.File
         reader *csv.Reader
     )
-    fmt.Println("reading "+networkFile)
     file,err=os.Open(networkFile)
     defer file.Close()
     if err!=nil {
-        fmt.Println("ERROR: "+err.Error())
+        fmt.Println("ERROR: "+networkFile+" "+err.Error())
+        return []string{},[][]string{},map[string]map[string]string{}
     } else {
         reader=csv.NewReader(file)
         reader.Comma='\t'
@@ -252,66 +307,33 @@ func ReadNetwork(networkFile,direction string) (map[string][]string,map[string]m
         reader.ReuseRecord=true
         lines,err=reader.ReadAll()
         if err!=nil {
-            fmt.Println("ERROR: "+err.Error())
+            fmt.Println("ERROR: "+networkFile+" "+err.Error())
+            return []string{},[][]string{},map[string]map[string]string{}
         } else {
-            nodeSP=make(map[string][]string)
-            edgeSP=make(map[string]map[string][][]string)
             edgeNames=make(map[string]map[string]string)
             for _,line=range lines {
-                for _,node1=range []string{line[0],line[2]} {
-                    nodeSP[node1]=[]string{}
+                edge=[]string{line[0],line[2]}
+                if IsInList2(edges,edge) {
+                    fmt.Println("ERROR: "+networkFile+" contains multi-edges (or duplicated edges)")
+                    return []string{},[][]string{},map[string]map[string]string{}
+                } else {
+                    edges=append(edges,CopyList(edge))
+                    for _,node=range edge {
+                        if !IsInList(nodes,node) {
+                            nodes=append(nodes,node)
+                        }
+                    }
+                    edgeNames[line[0]]=make(map[string]string)
                 }
-                edgeSP[line[0]]=make(map[string][][]string)
-                edgeNames[line[0]]=make(map[string]string)
             }
-            if direction=="down" {
-                for _,line=range lines {
-                    if IsInList(nodeSP[line[0]],line[2]) {
-                        fmt.Println("ERROR: multi-edges (or duplicated edges)")
-                        nodeSP=make(map[string][]string)
-                        edgeSP=make(map[string]map[string][][]string)
-                        edgeNames=make(map[string]map[string]string)
-                        break
-                    } else {
-                        nodeSP[line[0]]=append(nodeSP[line[0]],line[2])
-                        edgeSP[line[0]][line[2]]=[][]string{}
-                        edgeNames[line[0]][line[2]]=line[1]
-                    }
-                }
-                for node1=range nodeSP {
-                    for _,node2=range nodeSP[node1] {
-                        for _,node3=range nodeSP[node2] {
-                            edgeSP[node1][node2]=append(edgeSP[node1][node2],[]string{node2,node3})
-                        }
-                    }
-                }
-            } else if direction=="up" {
-                for _,line=range lines {
-                    if IsInList(nodeSP[line[2]],line[0]) {
-                        fmt.Println("ERROR: multi-edges (or duplicated edges)")
-                        nodeSP=make(map[string][]string)
-                        edgeSP=make(map[string]map[string][][]string)
-                        edgeNames=make(map[string]map[string]string)
-                        break
-                    } else {
-                        nodeSP[line[2]]=append(nodeSP[line[2]],line[0])
-                        edgeSP[line[0]][line[2]]=[][]string{}
-                        edgeNames[line[0]][line[2]]=line[1]
-                    }
-                }
-                for node1=range nodeSP {
-                    for _,node2=range nodeSP[node1] {
-                        for _,node3=range nodeSP[node2] {
-                            edgeSP[node2][node1]=append(edgeSP[node2][node1],[]string{node3,node2})
-                        }
-                    }
-                }
+            for _,line=range lines {
+                edgeNames[line[0]][line[2]]=line[1]
             }
         }
     }
-    return nodeSP,edgeSP,edgeNames
+    return nodes,edges,edgeNames
 }
-func ReadNodes(nodeFile string,nodeSP map[string][]string) []string {
+func ReadNodes(nodeFile string,networkNodes []string) []string {
     var (
         err error
         line,nodes []string
@@ -319,11 +341,11 @@ func ReadNodes(nodeFile string,nodeSP map[string][]string) []string {
         file *os.File
         reader *csv.Reader
     )
-    fmt.Println("reading "+nodeFile)
     file,err=os.Open(nodeFile)
     defer file.Close()
     if err!=nil {
-        fmt.Println("ERROR: "+err.Error())
+        fmt.Println("ERROR: "+nodeFile+" "+err.Error())
+        return []string{}
     } else {
         reader=csv.NewReader(file)
         reader.Comma='\t'
@@ -334,11 +356,12 @@ func ReadNodes(nodeFile string,nodeSP map[string][]string) []string {
         reader.ReuseRecord=true
         lines,err=reader.ReadAll()
         if err!=nil {
-            fmt.Println("ERROR: "+err.Error())
+            fmt.Println("ERROR: "+nodeFile+" "+err.Error())
+            return []string{}
         } else {
             for _,line=range lines {
-                if !IsInNetwork(nodeSP,line[0]) {
-                    fmt.Println("WARNING: "+line[0]+" not in network")
+                if !IsInList(networkNodes,line[0]) {
+                    fmt.Println("WARNING: "+nodeFile+"/"+line[0]+" not in network")
                 } else if !IsInList(nodes,line[0]) {
                     nodes=append(nodes,line[0])
                 }
@@ -355,11 +378,10 @@ func WriteNetwork(networkFile string,edges [][]string,edgeNames map[string]map[s
         file *os.File
         writer *csv.Writer
     )
-    fmt.Println("writing "+networkFile)
     file,err=os.Create(networkFile)
     defer file.Close()
     if err!=nil {
-        fmt.Println("ERROR: "+err.Error())
+        fmt.Println("ERROR: "+networkFile+" "+err.Error())
     } else {
         for _,edge=range edges {
             lines=append(lines,[]string{edge[0],edgeNames[edge[0]][edge[1]],edge[1]})
