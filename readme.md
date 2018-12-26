@@ -44,8 +44,8 @@ The returned file is a SIF file encoding the upstream/downstream paths of the ro
 
 ## Cautions
 
-* stream does not handle multi-graphs (i.e. networks where nodes can be connected by more than one edge)
-* note that if a network contains duplicated edges then it is a multi-graph
+* stream does not handle multi-edges (i.e. two or more edges having the same source node and the same target node)
+* note that duplicated edges are multi-edges
 * the network must be provided as a SIF file (see above)
 * in the file containing the root nodes (see above): one node per line
 
