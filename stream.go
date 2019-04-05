@@ -1,4 +1,4 @@
-// Copyright 2018 Arnaud Poret
+// Copyright 2018-2019 Arnaud Poret
 // This work is licensed under the BSD 2-Clause License.
 package main
 import (
@@ -83,7 +83,7 @@ func main() {
     } else if (len(os.Args)==2) && (os.Args[1]=="license") {
         fmt.Println(strings.Join([]string{
             "",
-            "Copyright 2018 Arnaud Poret",
+            "Copyright 2018-2019 Arnaud Poret",
             "",
             "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:",
             "",

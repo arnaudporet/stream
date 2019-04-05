@@ -1,6 +1,6 @@
 # Streaming over networks
 
-Copyright 2018 [Arnaud Poret](https://github.com/arnaudporet)
+Copyright 2018-2019 [Arnaud Poret](https://github.com/arnaudporet)
 
 This work is licensed under the [BSD 2-Clause License](https://raw.githubusercontent.com/arnaudporet/stream/master/license.txt).
 
