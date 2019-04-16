@@ -1,4 +1,4 @@
-# Streaming over networks
+# Streaming on networks
 
 Copyright 2018-2019 [Arnaud Poret](https://github.com/arnaudporet)
 
@@ -7,6 +7,8 @@ This work is licensed under the [BSD 2-Clause License](https://raw.githubusercon
 ## stream
 
 [stream](https://github.com/arnaudporet/stream) is a tool implemented in [Go](https://golang.org) for finding the upstream/downstream paths starting from a couple of root nodes in a network.
+
+stream is derived from [konect](https://github.com/arnaudporet/konect), a tool also implemented in [Go](https://golang.org) for finding paths connecting a couple of nodes in a network.
 
 stream handles networks encoded in the SIF file format (see below): the provided network must be encoded in the SIF file format.
 
